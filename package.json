@@ -1,0 +1,34 @@
+{
+  "name": "cordova-plugin-speech",
+  "version": "0.0.2",
+  "description": "This is cordova plugin for Speech Recognition and Text to Speech.",
+  "cordova": {
+    "id": "cordova-plugin-speech",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pravinkumarputta/cordova-plugin-speech.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "cordova",
+    "speech",
+    "recognition",
+    "stt",
+    "tts",
+    "texttospeech",
+    "speechtotext"
+  ],
+  "author": "Pravinkumar Putta",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pravinkumarputta/cordova-plugin-speech/issues"
+  },
+  "homepage": "https://github.com/pravinkumarputta/cordova-plugin-speech#readme"
+}

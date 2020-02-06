@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-speech" version="0.0.2" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>Speech</name>
+    <js-module name="Speech" src="www/Speech.js">
+        <clobbers target="Speech" />
+    </js-module>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="Speech">
+                <param name="android-package" value="com.pravinkumarp.Speech"/>
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.RECORD_AUDIO" />
+        </config-file>
+
+        <source-file src="src/android/com/pravinkumarp/Speech.java" target-dir="src/com/pravinkumarp" />
+        <source-file src="src/android/com/pravinkumarp/LanguageDetailsChecker.java" target-dir="src/com/pravinkumarp" />
+    </platform>
+
+    <!-- ios -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="Speech">
+                <param name="ios-package" value="Speech" />
+            </feature>
+        </config-file>
+
+        <config-file target="*-Info.plist" parent="NSMicrophoneUsageDescription">
+            <string>Request to use Microphone</string>
+        </config-file>
+
+        <config-file target="*-Info.plist" parent="NSSpeechRecognitionUsageDescription">
+            <string>Request to use Speech Recognition</string>
+        </config-file>
+
+        <source-file src="src/ios/Speech.swift" />
+
+        <framework src="Speech.framework" />
+        <framework src="AVFoundation.framework" />
+
+        <!-- Add in the swift-support plugin by default -->
+        <dependency id="cordova-plugin-add-swift-support"/>
+    </platform>
+</plugin>
