@@ -11,6 +11,7 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.util.Log;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -194,8 +195,8 @@ public class Speech extends CordovaPlugin {
         }
         this.sttCallbackContext = callbackContext;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (cordova.getActivity().checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                cordova.getActivity().requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+            if (!cordova.hasPermission(Manifest.permission.RECORD_AUDIO)) {
+                cordova.requestPermissions(this, REQUEST_RECORD_AUDIO, new String[]{Manifest.permission.RECORD_AUDIO});
                 return;
             }
         }
