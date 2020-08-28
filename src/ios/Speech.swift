@@ -5,6 +5,7 @@ import Speech
 @objc(Speech) class Speech : CDVPlugin, AVSpeechSynthesizerDelegate {
     
     static var supportedLanguages: [String] = []
+    static var supportedVoices: [String] = []
     var defaultLanugage = ""
     private var speechSynthesizer: AVSpeechSynthesizer?
     private var ttsCommand: CDVInvokedUrlCommand?
@@ -61,6 +62,23 @@ import Speech
         self.commandDelegate!.send(pluginResult, callbackId: command.callbackId);
     }
     
+    @objc(getSupportedVoices:) // Declare your function name.
+    func getSupportedVoices(command: CDVInvokedUrlCommand) {
+        // fetch languages
+        if(Speech.supportedVoices.count == 0) {
+            self.loadVoiceDetails()
+        }
+        
+        // prepare result
+        var pluginResult = CDVPluginResult (status: CDVCommandStatus_ERROR, messageAs: "Failed to get supported languages.");
+        if (Speech.supportedLanguages.count > 0) {
+            pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: Speech.supportedVoices);
+        }
+        
+        // publish result
+        self.commandDelegate!.send(pluginResult, callbackId: command.callbackId);
+    }
+    
     @objc(getDefaultLanguage:) // Declare your function name.
     func getDefaultLanguage(command: CDVInvokedUrlCommand) {
         // fetch languages
@@ -89,12 +107,24 @@ import Speech
         if (speechRate == 0.0) {
             speechRate = 0.5
         }
+
+        var speechLanguage = command.arguments[3] as? String ?? ""
         
         ttsCommand = command;
         // fetch languages
         let speechUtterance = AVSpeechUtterance(string: message)
         speechUtterance.pitchMultiplier = pitchRate
         speechUtterance.rate = speechRate
+
+        // set voice is added
+        if (speechLanguage != "") {
+            for voice in AVSpeechSynthesisVoice.speechVoices() {
+                if (voice.language == speechLanguage) {
+                    speechUtterance.voice = voice
+                    break
+                }
+            }
+        }
         
         if(speechSynthesizer == nil) {
             // initialize speechSynthesizer
@@ -131,6 +161,14 @@ import Speech
         SFSpeechRecognizer.supportedLocales().forEach { (locale) in
             Speech.supportedLanguages.append(locale.identifier)
         }
+    }
+    
+    private func loadVoiceDetails() {
+        // fetch supported voices
+        AVSpeechSynthesisVoice.speechVoices().forEach { (locale) in
+            Speech.supportedVoices.append("\(locale.language):\(locale.name)")
+        }
+        print("supportedVoices", Speech.supportedVoices)
     }
     
     @objc(initRecognition:) // Declare your function name.

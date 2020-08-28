@@ -29,6 +29,14 @@ Speech.supportedLanguages
 
 `[]String` - Returns list of supported Speech to Text language models.
 
+### getSupportedVoices()
+
+```js
+Speech.getSupportedVoices(Function successCallback, Function errorCallback)
+```
+
+Result of success callback is an Array of supported voices.
+
 ### defaultLanguage
 
 ```js
@@ -43,7 +51,8 @@ Speech.supportedLanguages
 
 let options = {
   Number pitchRate,
-  Number speechRate
+  Number speechRate,
+  String language
 }
 
 Speech.speakOut(String message, Function successCallback, Function errorCallback, Object options)
@@ -58,12 +67,15 @@ Result of success callback is an `String` of TTS states as below:
 
 This method has an options parameter with the following optional values:
 
-- `pitchRate` {Number} used language for TTS pitch rate.
+- `pitchRate` {Number} used for TTS pitch rate.
 1. `iOS` - The default pitch is 1.0. Allowed values are in the range from 0.5 (for lower pitch) to 2.0 (for higher pitch).
 1. `Android` - The default pitch is 1.0, lower values lower the tone of the synthesized voice, greater values increase it.
-- `speechRate`  {Number} used language for TTS speech rate.
+- `speechRate`  {Number} used for TTS speech rate.
 1. `iOS` - The default speech rate is 0.5. Lower values correspond to slower speech, and vice versa.
 1. `Android` - The default speech rate is 1.0. Lower values correspond to slower speech, and vice versa.
+- `language`  {String} used for TTS speech voice.
+1. `iOS` - Use `Speech.getSupportedVoices()` to get voices and use `selectedVoice.language` as input.
+1. `Android` - Use `Speech.getSupportedVoices()` to get voices and use `selectedVoice.name` as input.
 
 ### initRecognition()
 

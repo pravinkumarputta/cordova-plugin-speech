@@ -11,7 +11,7 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
-import android.util.Log;
+import android.speech.tts.Voice;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -23,6 +23,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class echoes a string called from JavaScript.
@@ -31,6 +32,7 @@ public class Speech extends CordovaPlugin {
     // API lists
     private final static String TAG = "Speech";
     private final static String GET_SUPPORTED_LANGUAGES = "getSupportedLanguages";
+    private final static String GET_SUPPORTED_VOICES = "getSupportedVoices";
     private final static String GET_DEFAULT_LANGUAGE = "getDefaultLanguage";
     private final static String SPEAK_OUT = "speakOut";
     private final static String INIT_RECOGNITION = "initRecognition";
@@ -60,6 +62,9 @@ public class Speech extends CordovaPlugin {
             case GET_SUPPORTED_LANGUAGES:
                 this.getSupportedLanguages(callbackContext);
                 break;
+            case GET_SUPPORTED_VOICES:
+                this.getSupportedVoices(callbackContext);
+                break;
             case GET_DEFAULT_LANGUAGE:
                 this.getDefaultLanguage(callbackContext);
                 break;
@@ -73,7 +78,8 @@ public class Speech extends CordovaPlugin {
                 if (speechRate == 0f) {
                     speechRate = 1f;
                 }
-                this.speakOut(message, pitchRate, speechRate, callbackContext);
+                String speechLanguageName = (String) args.getString(3);
+                this.speakOut(message, pitchRate, speechRate, speechLanguageName, callbackContext);
                 break;
             }
             case INIT_RECOGNITION:
@@ -110,7 +116,27 @@ public class Speech extends CordovaPlugin {
             return;
         }
 
-        this.loadLanugageDetails(() -> Speech.this.publishSupportedLanguagesResult(callbackContext));
+        this.loadLanguageDetails(() -> Speech.this.publishSupportedLanguagesResult(callbackContext));
+    }
+
+    private void getSupportedVoices(CallbackContext callbackContext) {
+        this.textToSpeech = new TextToSpeech(cordova.getActivity(), status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                ArrayList<String> supportedVoices = new ArrayList<>();
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    Set<Voice> voices = textToSpeech.getVoices();
+                    if (voices != null) {
+                        for (Voice voice : voices) {
+                            supportedVoices.add(voice.getLocale() + ":" + voice.getName());
+                        }
+                    }
+                }
+                JSONArray voicesArray = new JSONArray(supportedVoices);
+                callbackContext.success(voicesArray);
+            } else {
+                callbackContext.error("Failed to init tts.");
+            }
+        });
     }
 
     private void publishSupportedLanguagesResult(CallbackContext callbackContext) {
@@ -129,7 +155,7 @@ public class Speech extends CordovaPlugin {
             return;
         }
 
-        this.loadLanugageDetails(() -> Speech.this.publishDefaultLanguageResult(callbackContext));
+        this.loadLanguageDetails(() -> Speech.this.publishDefaultLanguageResult(callbackContext));
     }
 
     private void publishDefaultLanguageResult(CallbackContext callbackContext) {
@@ -141,7 +167,7 @@ public class Speech extends CordovaPlugin {
         }
     }
 
-    private void loadLanugageDetails(LanguageDetailsChecker.LanguageDetailsCheckerListener languageDetailsCheckerListener) {
+    private void loadLanguageDetails(LanguageDetailsChecker.LanguageDetailsCheckerListener languageDetailsCheckerListener) {
         languageDetailsChecker = new LanguageDetailsChecker(languageDetailsCheckerListener);
         Intent detailsIntent = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -150,7 +176,7 @@ public class Speech extends CordovaPlugin {
         cordova.getActivity().sendOrderedBroadcast(detailsIntent, null, languageDetailsChecker, null, Activity.RESULT_OK, null, null);
     }
 
-    private void speakOut(String message, float pitchRate, float speechRate, CallbackContext callbackContext) {
+    private void speakOut(String message, float pitchRate, float speechRate, String speechLanguageName, CallbackContext callbackContext) {
         this.ttsCallbackContext = callbackContext;
         this.textToSpeech = new TextToSpeech(cordova.getActivity(), status -> {
             if (status == TextToSpeech.SUCCESS) {
@@ -174,18 +200,30 @@ public class Speech extends CordovaPlugin {
                         Speech.this.ttsCallbackContext.error("Failed to speak.");
                     }
                 });
-                Speech.this.speak(message, pitchRate, speechRate);
+                Speech.this.speak(message, pitchRate, speechRate, speechLanguageName);
             } else {
                 Speech.this.ttsCallbackContext.error("Failed to init tts.");
             }
         });
     }
 
-    private void speak(String message, float pitchRate, float speechRate) {
+    private void speak(String message, float pitchRate, float speechRate, String speechLanguageName) {
         HashMap<String, String> params = new HashMap<>();
         params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "id");
         textToSpeech.setPitch(pitchRate);
         textToSpeech.setSpeechRate(speechRate);
+
+        if (!speechLanguageName.isEmpty() && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            Set<Voice> voices = textToSpeech.getVoices();
+            if (voices != null) {
+                for (Voice voice : voices) {
+                    if (voice.getName().equals(speechLanguageName)) {
+                        textToSpeech.setVoice(voice);
+                        break;
+                    }
+                }
+            }
+        }
         Speech.this.textToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, params);
     }
 
